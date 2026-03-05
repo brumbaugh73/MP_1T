@@ -3,3 +3,22 @@ title: "MP_1"
 format: pdf
 editor: visual
 ---
+```{r}
+library(tidyverse)
+library(tidytext)
+covid_tweet<-read.csv("covid19_tweets.csv")
+```
+
+```{r}
+covid_tweet_un <- covid_tweet |>
+  mutate(line = row_number()) |>
+  unnest_tokens(word, text, token = "words") 
+```
+
+```{r}
+covid_tweet_un_imp<-covid_tweet_un|>
+  mutate(has_covid_hashtag = str_detect(hashtags, "Covid"))|>
+  filter(has_covid_hashtag== TRUE)|>
+  filter(user_followers>1000)
+```
+
