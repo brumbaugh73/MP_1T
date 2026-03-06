@@ -1,0 +1,108 @@
+---
+title: "MP_1"
+format: pdf
+editor: visual
+---
+```{r}
+#setup chunk 
+library(tidyverse) 
+library(tidytext)
+library(textdata)
+
+covid_tweet<-read.csv("covid19_tweets.csv")
+```
+
+```{r}
+#Unnest the words
+covid_tweet_un <- covid_tweet |> 
+  mutate(line = row_number()) |>
+  unnest_tokens(word, text, token = "words") 
+```
+
+
+```{r}
+#Filters to tweets with #covid19
+covid_tweet_unimp<-covid_tweet_un|>
+  mutate(has_covid_hashtag = str_detect(hashtags, ".*[Cc][Oo][Vv][Ii][Dd].*"))|>
+  filter(has_covid_hashtag== TRUE)|>
+  filter(!str_detect(word, "https|t\\.co"))|>
+  mutate(date = str_sub(date, 1, 10),
+         date = ymd(date)) #changes date variable to be a date type variable
+```
+
+```{r}
+#removes all words in the smart stop words library 
+smart_stopwords <- get_stopwords(source = "smart") 
+
+covid_tweet_unimp_stop<-covid_tweet_unimp|>
+  anti_join(smart_stopwords) |>
+  count(word, sort = TRUE) |>
+  filter(word != "NA")
+```
+
+```{r}
+#Puts in Bing sentiments and makes graph comparing Number of Positive or Negative Words 
+bing_sentiments <- get_sentiments(lexicon = "bing")
+
+covid_tweet_unimp_stop|>   
+  inner_join(bing_sentiments) |>
+  mutate(count = str_count(word))|>
+   group_by(sentiment) |>  
+  summarise(total_count = sum(count, na.rm = TRUE)) |> 
+  ungroup()|>
+ggplot(aes(x = sentiment, y = total_count, fill = sentiment)) +
+  geom_col() +
+  labs(title = "Number of Positive or Negative Words",
+       x = "Sentiment Type",
+       y = "Total Count of Words") +
+  theme_minimal()
+```
+
+
+```{r}
+# Grabs Affin sentiments and produces a tibble
+afinn_sentiments <- get_sentiments(lexicon = "afinn")
+
+
+covid_sentiment<-covid_tweet_unimp_stop |>   
+  inner_join(afinn_sentiments) |>
+  count(value)|>
+  rename(sentiment_score = value,
+         count= n)|>
+  print()
+```
+
+```{r}
+#Makes histogram of sentiments from the afinn scores 
+covid_sentiment|>
+  ggplot(aes(x=sentiment_score, y= count))+
+  geom_bar(stat = "identity")+
+  labs(title = "Number of Words with Certain Sentiments",
+       x= "Sentiments",
+       y= "Number of Words") +
+  theme_minimal()
+```
+
+```{r}
+#shows the average afinn sentiment per day 
+covid_tweet_unimp|> #cant use covid sentiments so remakes covid sentiments 
+  anti_join(smart_stopwords)|>
+  inner_join(afinn_sentiments)|>
+  group_by(date) |>
+  summarise(average_sentiment = mean(value, na.rm = TRUE)) |> # makes averages
+  ungroup()|>
+  ggplot(aes(x = date, y = average_sentiment)) +
+  geom_line(color = "blue") + 
+  geom_hline(yintercept = 0, color = "red", linetype = 2)+ #highlights where 0 is
+  geom_point(color = "blue") +
+  labs(title = "Average Sentiment Over Time",
+       x = "Date",
+       y = "Average Sentiment Score") +
+  theme_minimal()
+```
+
+
+
+
+
+
