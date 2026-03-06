@@ -78,7 +78,7 @@ covid_sentiment<-covid_tweet_unimp_stop |>
   print()
 ```
 
-This histogram
+
 
 ```{r echo = FALSE}
 #Makes histogram of sentiments from the afinn scores 
