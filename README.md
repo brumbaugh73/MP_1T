@@ -1,2 +1,7 @@
 # MP_1T
-true
+
+Please check MP_1_Code to see my code
+
+MP_1_PDF_version is only for knitting to pdf 
+
+This should make a nice clean pdf for your viewing pleasure
